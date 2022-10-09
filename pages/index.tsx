@@ -56,7 +56,7 @@ const Home: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<type
   return (
     <div>
       <Head>
-        <title>Poke n sei Oq</title>
+        <title>Pokemudo</title>
         <meta name="description" content="Jogo legal" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
