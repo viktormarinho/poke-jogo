@@ -2,8 +2,9 @@ import Image from 'next/image';
 import { useState } from 'react';
 import Autosuggest from 'react-autosuggest';
 import styled from 'styled-components';
-import { capitalizeFirstLetter, Pokemon } from '../pages';
+import { Pokemon } from './../pages/game/[id]';
 
+const capitalizeFirstLetter = (string: string) => string.charAt(0).toUpperCase() + string.slice(1);
 
 interface SearchBarProps {
     handleChute: Function

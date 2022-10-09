@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import styled from 'styled-components';
-import { Pokemon } from '../pages';
+import { Pokemon } from './../pages/game/[id]';
 import { ComparisonCard } from './ComparisonCard';
 
 interface ChuteCardProps {
