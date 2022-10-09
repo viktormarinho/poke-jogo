@@ -1,12 +1,38 @@
 import { NextPage } from "next";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import styled from 'styled-components';
 import Swal from 'sweetalert2';
+import { getSupabase } from "../common/supa";
 
 
 const Home: NextPage = () => {
   const [novaSalaText, setNovaSalaText] = useState<string>('');
+  const supabase = getSupabase();
+  const router = useRouter();
+
+  const criarSala: () => any = async () => {
+    Swal.fire({
+      position: 'top',
+      toast: true,
+      icon: 'info',
+      title: 'Criando sua sala...',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+
+    const pin = Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
+    const jaExiste = await supabase.from('salas').select('*').eq('pin', `${pin}`);
+
+    if (jaExiste.data!.length) {
+      return criarSala();
+    } 
+
+    await supabase.from('salas').insert({pin: `${pin}`});
+    router.push('/game/' + pin);
+  }
 
   const pinMask = (input: string) => {
     if (!input.match(/^[0-9]*$/)) {
@@ -48,7 +74,7 @@ const Home: NextPage = () => {
             />
           </label>
           <button onClick={() => console.log('pi')}>Entrar</button>
-          <button onClick={() => console.log('go')} className="new">Nova sala</button>
+          <button onClick={criarSala} className="new">Nova sala</button>
         </StartGameBox>
       </Main>
     </div>
