@@ -16,7 +16,8 @@
     "react-autosuggest": "^10.1.0",
     "react-dom": "18.2.0",
     "react-icons": "^4.4.0",
-    "styled-components": "^5.3.6"
+    "styled-components": "^5.3.6",
+    "sweetalert2": "^11.4.38"
   },
   "devDependencies": {
     "@types/node": "18.7.23",
