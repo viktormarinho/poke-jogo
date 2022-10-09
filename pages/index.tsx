@@ -1,41 +1,57 @@
-import type { NextPage } from 'next';
+import type { GetServerSideProps, InferGetServerSidePropsType, NextPage } from 'next';
 import Head from 'next/head';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
-import axios from 'axios';
 import Image from 'next/image';
+import { SearchBar } from '../components/Searchbar';
+import { ChuteCard } from '../components/ChuteCard';
+import { createClient } from '@supabase/supabase-js';
 
-interface Pokemon {
+export const capitalizeFirstLetter = (string: string) => string.charAt(0).toUpperCase() + string.slice(1);
+
+export interface Pokemon {
   id: number
   nome: string
   tipos: string[]
   imagem: string
   peso: number
   altura: number
+  gen: number
 }
 
-const Home: NextPage = () => {
+const Home: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
 
-  const [poke, setPoke] = useState<Pokemon>();
+  const [chutes, setChutes] = useState<Pokemon[]>([]);
 
-  const getRandomPoke = async () => {
-    const randomPokeId = Math.floor(Math.random() * 906)
+  const supabaseUrl = 'https://gwdxmeglfljvunqahbxp.supabase.co';
+  const supabaseKey = process.env.NEXT_PUBLIC_API_KEY;
+  const supabase = createClient(supabaseUrl, supabaseKey!);
+
+  const handleChute = async (chute: string) => {
+    const query = await supabase.from<Pokemon>('pokemons')
+      .select('*')
+      .eq('nome', chute);
+
+    const chutePoke = query.data![0];
     
-    const { data } = await axios.get('https://pokeapi.co/api/v2/pokemon/' + randomPokeId);
+    if (chutes.filter(c => c.nome === chute).length) {
+      return jaChutou();
+    }
 
-    setPoke({
-      id: data.id,
-      nome: data.name,
-      tipos: data.types.map((t: any) => t.type.name),
-      imagem: data.sprites.other['official-artwork'].front_default,
-      peso: data.weight / 10,
-      altura: data.height / 10
-    })
+    setChutes([chutePoke, ...chutes]);
+
+    if (poke.nome === chute) {
+      return handleAcertou();
+    }
   }
 
-  useEffect(() => {
-    getRandomPoke();
-  }, [])
+  const handleAcertou = () => {
+    console.log('acertou')
+  }
+
+  const jaChutou = () => {
+    console.log('já chutou esse pokemon')
+  }
 
   return (
     <div>
@@ -46,6 +62,13 @@ const Home: NextPage = () => {
       </Head>
 
       <Main>
+        <br /><br />
+        <SearchBar handleChute={handleChute} allPokesList={allPokesList} />
+        <br /><br /><br />
+        {chutes?.map((chute) => {
+          return <ChuteCard key={chute.id} pokemon={chute} pokeCerto={poke!} />
+        })}
+        <br /><br />
         {poke ?
         <Bloco>
           <Image loader={() => poke.imagem} src={poke.imagem} alt="Imagem do pokémon escolhido" layout='fixed' width={200} height={200} />
@@ -59,8 +82,27 @@ const Home: NextPage = () => {
   )
 }
 
+export const getServerSideProps: GetServerSideProps = async () =>{
+  const supabaseUrl = 'https://gwdxmeglfljvunqahbxp.supabase.co';
+  const supabaseKey = process.env.NEXT_PUBLIC_API_KEY;
+  const supabase = createClient(supabaseUrl, supabaseKey!);
+
+  const randomPokeId = Math.floor(Math.random() * 906);
+  
+  const pokes = await supabase.from<Pokemon>('pokemons').select('*');
+  let allPokesList = pokes.data!;
+  
+  return {
+    props: {
+      poke: allPokesList[randomPokeId],
+      allPokesList
+    }
+  };
+}
+
 const Main = styled.main`
   display: flex;
+  width: 100vw;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
