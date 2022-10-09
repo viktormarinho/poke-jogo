@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import Image from 'next/image';
 import { SearchBar } from '../../components/Searchbar';
 import { ChuteCard } from '../../components/ChuteCard';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '../../common/supa';
 
 export interface Pokemon {
   id: number
@@ -73,10 +73,7 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
 }
 
 export const getServerSideProps: GetServerSideProps = async () =>{
-  const supabaseUrl = 'https://gwdxmeglfljvunqahbxp.supabase.co';
-  const supabaseKey = process.env.NEXT_PUBLIC_API_KEY;
-  const supabase = createClient(supabaseUrl, supabaseKey!);
-
+  const supabase = getSupabase();
   const randomPokeId = Math.floor(Math.random() * 906);
   
   const pokes = await supabase.from<Pokemon>('pokemons').select('*');
