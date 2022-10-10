@@ -19,7 +19,7 @@ const Home: NextPage = () => {
       icon: 'info',
       title: 'Criando sua sala...',
       showConfirmButton: false,
-      timer: 2000,
+      timer: 5000,
       timerProgressBar: true
     });
 
