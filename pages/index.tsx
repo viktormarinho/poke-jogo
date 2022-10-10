@@ -73,7 +73,7 @@ const Home: NextPage = () => {
               maxLength={5}
             />
           </label>
-          <button onClick={() => console.log('pi')}>Entrar</button>
+          <button onClick={() => router.push('/game/' + novaSalaText)}>Entrar</button>
           <button onClick={criarSala} className="new">Nova sala</button>
         </StartGameBox>
       </Main>
