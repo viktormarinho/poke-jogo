@@ -22,6 +22,7 @@ export interface Pokemon {
 interface Jogador {
   presence_ref: string
   user_name: string
+  pronto: boolean
 }
 
 const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
@@ -29,6 +30,7 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
   const [chutes, setChutes] = useState<Pokemon[]>([]);
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [nome, setNome] = useState<string>('Anônimo');
+  const [pronto, setPronto] = useState<boolean>(false);
   const supabase = getSupabase();
   const router = useRouter();
   const SalaId = `sala-${router.query.id as string}`;
@@ -63,9 +65,21 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
       .on('presence', { event: 'leave' }, ({ leftPresences }: any) => setJogadores((prev) => prev.filter(jog => jog.presence_ref != leftPresences[0].presence_ref)))
       .subscribe(async (status: any) => {
         if (status === 'SUBSCRIBED')
-          await channel.track({ user_name: nome });
+          await channel.track({ user_name: nome, pronto });
       })
     connected.current = true;
+  }
+
+  const isTodosProntos = () => {
+    let todosprontos = true;
+
+    for (const jogador of jogadores) {
+      if (!jogador.pronto) {
+        todosprontos = false;
+      }
+    }
+
+    return todosprontos;
   }
 
   useEffect(() => {
@@ -91,15 +105,22 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
             <h2>Sua sala: {SalaId}</h2>
             <h4>Jogadores:
               <ul>
-                {jogadores.map((jog) => <li key={jog.presence_ref}>{jog.user_name}</li>)}
+                {jogadores.map((jog) => <ListItem key={jog.presence_ref} pronto={jog.pronto}>{jog.user_name}</ListItem>)}
               </ul>
             </h4>
           </section>
-          <div>
-            <input type="text" value={nome} onChange={(e: any) => setNome(e.target.value)} />
-            <button onClick={async () => await channel.track({ user_name: nome })}>
+          <div id="opcoesDiv">
+            <input type="text" disabled={isTodosProntos()} value={nome} onChange={(e: any) => setNome(e.target.value)} />
+            <button disabled={isTodosProntos()} onClick={async () => await channel.track({ user_name: nome, pronto })}>
               Atualizar nome
             </button>
+            <button disabled={isTodosProntos()} className={pronto ? 'red' : 'green'} onClick={async () => {
+              await channel.track({ user_name: nome, pronto: !pronto });
+              setPronto(!pronto);
+            }}>
+              {pronto ? 'Não estou pronto' : 'Estou pronto'}
+            </button>
+            <h2 style={{ textAlign: 'center' }} hidden={!isTodosProntos()}>Iniciando...</h2>
           </div>
         </WaitingStatePage>
 
@@ -150,6 +171,10 @@ const Page = styled.div`
   justify-content: center;
 `;
 
+const ListItem = styled.li<{ pronto: boolean }>`
+  color: ${props => props.pronto ? 'green' : 'red'};
+`;
+
 const WaitingStatePage = styled.div`
   position: absolute;
   top: 2rem;
@@ -167,7 +192,9 @@ const WaitingStatePage = styled.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
-    align-self: flex-end;
+    align-self: center;
+    padding-bottom: 1rem;
+    padding-top: 1rem;
 
     button {
       color: white;
@@ -184,6 +211,48 @@ const WaitingStatePage = styled.div`
       &:hover{
         box-shadow: 0 0 rgb(29, 29, 29);
         transform: translateY(4px);
+      }
+    }
+
+    .green {
+      color: white;
+      border-radius: 4px;
+      border: none;
+      background-color: rgb(53, 122, 34);
+      font-size: 1.25rem;
+      font-weight: 600;
+      padding: 8px 0;
+      width: 300px;
+      cursor: pointer;
+      box-shadow: 0 4px rgb(53, 91, 39);
+
+      &:hover{
+        box-shadow: 0 0 rgb(53, 91, 39);
+        transform: translateY(4px);
+      }
+    }
+
+    .red {
+      color: white;
+      border-radius: 4px;
+      border: none;
+      background-color: #b82f43;
+      font-size: 1.25rem;
+      font-weight: 600;
+      padding: 8px 0;
+      width: 300px;
+      cursor: pointer;
+      box-shadow: 0 4px #922536;
+
+      &:hover{
+        box-shadow: 0 0 #922536;
+        transform: translateY(4px);
+      }
+    }
+
+    button, .green, .red, input {
+      &:disabled{
+        opacity: 35%;
       }
     }
 
