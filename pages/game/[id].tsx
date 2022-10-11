@@ -191,7 +191,7 @@ const WaitingStatePage = styled.div`
   z-index: 9999;
   display: flex;
   justify-content: space-around;
-  border: 1px solid black;
+  border: 3px solid black;
 
   div {
     display: flex;
