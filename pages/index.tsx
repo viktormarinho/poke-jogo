@@ -28,10 +28,10 @@ const Home: NextPage = () => {
 
     if (jaExiste.data!.length) {
       return criarSala();
-    } 
+    }
 
-    await supabase.from('salas').insert({pin: `${pin}`});
-    router.push('/game/' + pin);
+    await supabase.from('salas').insert({ pin: `${pin}` });
+    router.push('/room/' + pin);
   }
 
   const pinMask = (input: string) => {
@@ -62,18 +62,18 @@ const Home: NextPage = () => {
       </Head>
 
       <Main>
-        <h1 style={{textAlign: 'center'}}>Jogar Pokémudo</h1>
+        <h1 style={{ textAlign: 'center' }}>Jogar Pokémudo</h1>
         <StartGameBox>
           <label>
-            <input 
-              type="text" 
-              placeholder="PIN da Sala" 
-              onChange={(e: any) => setNovaSalaText(pinMask(e.target.value))} 
-              value={novaSalaText} 
+            <input
+              type="text"
+              placeholder="PIN da Sala"
+              onChange={(e: any) => setNovaSalaText(pinMask(e.target.value))}
+              value={novaSalaText}
               maxLength={5}
             />
           </label>
-          <button onClick={() => router.push('/game/' + novaSalaText)}>Entrar</button>
+          <button onClick={() => router.push('/room/' + novaSalaText)}>Entrar</button>
           <button onClick={criarSala} className="new">Nova sala</button>
         </StartGameBox>
       </Main>
