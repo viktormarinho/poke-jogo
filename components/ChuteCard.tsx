@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import styled from 'styled-components';
-import { Pokemon } from './../pages/game/[id]';
+import { Pokemon } from '../common/pokemon';
 import { ComparisonCard } from './ComparisonCard';
 
 interface ChuteCardProps {
@@ -8,7 +8,7 @@ interface ChuteCardProps {
     pokeCerto: Pokemon
 }
 
-export const ChuteCard = ({pokemon, pokeCerto}: ChuteCardProps) => {
+export const ChuteCard = ({ pokemon, pokeCerto }: ChuteCardProps) => {
     const isChuteCerto = pokemon.nome === pokeCerto.nome;
 
     return (
@@ -32,7 +32,7 @@ export const ChuteCard = ({pokemon, pokeCerto}: ChuteCardProps) => {
 }
 
 
-const Card = styled.div<{chuteCerto: boolean}>`
+const Card = styled.div<{ chuteCerto: boolean }>`
     border-radius: 1.5rem;
     background-color: ${(props: any) => props.chuteCerto ? '#6ad66a' : '#f3f3f3'};
     color: black;
@@ -43,7 +43,7 @@ const Card = styled.div<{chuteCerto: boolean}>`
     width: 40vw;
 `;
 
-const ImageContainer = styled.div<{chuteCerto: boolean}>`
+const ImageContainer = styled.div<{ chuteCerto: boolean }>`
     background-color: whitesmoke;
     padding: .5rem;
     height: 75px;
@@ -63,7 +63,7 @@ const ComparisonsContainer = styled.div`
     align-items: center;
 `;
 
-const Comparison = styled.div<{certo: boolean}>`
+const Comparison = styled.div<{ certo: boolean }>`
     background-color: ${(props: any) => props.certo ? '#3ea33e' : '#c03d3d'};
     color: white;
     font-weight: 600;       
