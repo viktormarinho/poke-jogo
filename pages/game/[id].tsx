@@ -8,6 +8,7 @@ import { ChuteCard } from '../../components/ChuteCard';
 import { getSupabase } from '../../common/supa';
 import { Block } from 'notiflix';
 import { useRouter } from 'next/router';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 export interface Pokemon {
   id: number
@@ -102,14 +103,19 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
         <WaitingStatePage>
           <section>
             <h1>Sala de espera</h1>
-            <h2>Sua sala: {SalaId}</h2>
-            <h4>Jogadores:
-              <ul>
-                {jogadores.map((jog) => <ListItem key={jog.presence_ref} pronto={jog.pronto}>{jog.user_name}</ListItem>)}
-              </ul>
-            </h4>
+            <h4>Jogadores:</h4>
+            <ul>
+              {jogadores.map((jog) => {
+                return (
+                  <li key={jog.presence_ref}>{jog.user_name}<Pronto pronto={jog.pronto}>
+                    {jog.pronto ? <FaCheckCircle size={25} /> : <FaTimesCircle size={25}/>}  
+                  </Pronto></li>
+                )
+              })}
+            </ul>
           </section>
           <div id="opcoesDiv">
+            <h2>PIN da Sala: {router.query.id}</h2>
             <input type="text" disabled={isTodosProntos()} value={nome} onChange={(e: any) => setNome(e.target.value)} />
             <button disabled={isTodosProntos()} onClick={async () => await channel.track({ user_name: nome, pronto })}>
               Atualizar nome
@@ -171,30 +177,34 @@ const Page = styled.div`
   justify-content: center;
 `;
 
-const ListItem = styled.li<{ pronto: boolean }>`
+const Pronto = styled.span<{ pronto: boolean }>`
   color: ${props => props.pronto ? 'green' : 'red'};
 `;
 
 const WaitingStatePage = styled.div`
   position: absolute;
-  top: 2rem;
-  width: 95vh;
-  height: 40vh;
+  width: 50vw;
+  height: 50vh;
   padding: 8px;
   border-radius: 8px;
   background-color: white;
-  border: 1px solid black;
   z-index: 9999;
   display: flex;
   justify-content: space-around;
+  border: 1px solid black;
 
   div {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    align-self: center;
+    align-self: flex-start;
     padding-bottom: 1rem;
     padding-top: 1rem;
+  
+    h2 {
+      text-align: center;
+      justify-self: flex-start;
+    }
 
     button {
       color: white;
@@ -281,6 +291,36 @@ const WaitingStatePage = styled.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
+
+    h1 {
+      font-size: 2rem;
+      margin: 0;
+      margin-top: 2rem;
+    }
+
+    h2 {
+      margin: 0;
+      margin-top: 2.5rem;
+    }
+
+    h4{
+      text-align: center;
+    }
+
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      border-radius: 4px;
+      padding-inline-start: 0;
+
+      li {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        align-items: center;
+      }
+    }
   }
 `;
 
