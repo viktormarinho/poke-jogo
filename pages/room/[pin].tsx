@@ -1,64 +1,31 @@
-import type { GetServerSideProps, InferGetServerSidePropsType, NextPage } from 'next';
+import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import Image from 'next/image';
-import { SearchBar } from '../../components/Searchbar';
-import { ChuteCard } from '../../components/ChuteCard';
 import { getSupabase } from '../../common/supa';
-import { Block } from 'notiflix';
 import { useRouter } from 'next/router';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { PageBackground } from './../../components/PageBackground';
+import { useGameStore } from './../../common/store';
 
-export interface Pokemon {
-  id: number
-  nome: string
-  tipos: string[]
-  imagem: string
-  peso: number
-  altura: number
-  gen: number
-}
-
-interface Jogador {
+type Jogador = {
   presence_ref: string
   user_name: string
   pronto: boolean
 }
 
-const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const RoomPage: NextPage = () => {
 
-  const [chutes, setChutes] = useState<Pokemon[]>([]);
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [nome, setNome] = useState<string>('Anônimo');
   const [pronto, setPronto] = useState<boolean>(false);
+  const [isTodosProntos, setTodosProntos] = useState<boolean>(false);
+  const setPlayer = useGameStore((state: any) => state.setPlayer);
   const supabase = getSupabase();
   const router = useRouter();
-  const SalaId = `sala-${router.query.id as string}`;
+  const SalaId = `sala-${router.query.pin as string}`;
   const channel = useRef(supabase.channel(SalaId)).current;
   const connected = useRef(false);
-
-  const handleChute = async (chute: string) => {
-    const chutePoke = allPokesList.filter((p: Pokemon) => p.nome == chute)[0];
-
-    if (chutes.filter(c => c.nome === chute).length) {
-      return jaChutou();
-    }
-
-    setChutes([chutePoke, ...chutes]);
-
-    if (poke.nome === chute) {
-      return handleAcertou();
-    }
-  }
-
-  const handleAcertou = () => {
-    console.log('acertou')
-  }
-
-  const jaChutou = () => {
-    console.log('já chutou esse pokemon')
-  }
 
   const connectToChannel = () => {
     channel
@@ -71,8 +38,9 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
     connected.current = true;
   }
 
-  const isTodosProntos = () => {
+  const checkTodosProntos = async () => {
     let todosprontos = true;
+    const PIN = router.query.pin;
 
     for (const jogador of jogadores) {
       if (!jogador.pronto) {
@@ -80,12 +48,17 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
       }
     }
 
-    return todosprontos;
+    setTodosProntos(todosprontos);
+    await supabase
+      .from('salas')
+      .update({ players: jogadores.map(jg => jg.user_name) })
+      .eq('pin', PIN);
+
+    setPlayer({ nome, presence_ref: '', minha_vez: false });
+    router.push('/game/' + PIN);
   }
 
   useEffect(() => {
-    Block.pulse('#mainContainer');
-
     if (!connected.current) {
       connectToChannel();
     }
@@ -99,7 +72,7 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Page>
+      <PageBackground>
         <WaitingStatePage>
           <section>
             <h1>Sala de espera</h1>
@@ -108,74 +81,34 @@ const GamePage: NextPage = ({ poke, allPokesList }: InferGetServerSidePropsType<
               {jogadores.map((jog) => {
                 return (
                   <li key={jog.presence_ref}>{jog.user_name}<Pronto pronto={jog.pronto}>
-                    {jog.pronto ? <FaCheckCircle size={25} /> : <FaTimesCircle size={25}/>}  
+                    {jog.pronto ?
+                      <FaCheckCircle size={25} /> :
+                      <FaTimesCircle size={25} />}
                   </Pronto></li>
                 )
               })}
             </ul>
           </section>
           <div id="opcoesDiv">
-            <h2>PIN da Sala: {router.query.id}</h2>
-            <input type="text" disabled={isTodosProntos()} value={nome} onChange={(e: any) => setNome(e.target.value)} />
-            <button disabled={isTodosProntos()} onClick={async () => await channel.track({ user_name: nome, pronto })}>
+            <h2>PIN da Sala: {router.query.pin}</h2>
+            <input type="text" disabled={isTodosProntos} value={nome} onChange={(e: any) => setNome(e.target.value)} />
+            <button disabled={isTodosProntos} onClick={async () => await channel.track({ user_name: nome, pronto })}>
               Atualizar nome
             </button>
-            <button disabled={isTodosProntos()} className={pronto ? 'red' : 'green'} onClick={async () => {
+            <button disabled={isTodosProntos} className={pronto ? 'red' : 'green'} onClick={async () => {
               await channel.track({ user_name: nome, pronto: !pronto });
               setPronto(!pronto);
+              checkTodosProntos();
             }}>
               {pronto ? 'Não estou pronto' : 'Estou pronto'}
             </button>
-            <h2 style={{ textAlign: 'center' }} hidden={!isTodosProntos()}>Iniciando...</h2>
+            <h2 style={{ textAlign: 'center' }} hidden={!isTodosProntos}>Iniciando...</h2>
           </div>
         </WaitingStatePage>
-
-        <Main id="mainContainer">
-          <br /><br />
-          <SearchBar handleChute={handleChute} allPokesList={allPokesList} />
-          <br /><br /><br />
-          {chutes?.map((chute) => {
-            return <ChuteCard key={chute.id} pokemon={chute} pokeCerto={poke!} />
-          })}
-          <br /><br />
-          {poke ?
-            <Bloco>
-              <Image loader={() => poke.imagem} src={poke.imagem} alt="Imagem do pokémon escolhido" layout='fixed' width={100} height={100} />
-              <h2>{poke.nome} - Pokémon número {poke.id}</h2>
-              <h3>Altura: {poke.altura}m - Peso: {poke.peso}kg</h3>
-              <h3>Tipos: {poke.tipos.join(',')}</h3>
-            </Bloco>
-            : <p>carregando...</p>}
-        </Main>
-      </Page>
+      </PageBackground>
     </div>
   )
 }
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const supabase = getSupabase();
-  const randomPokeId = Math.floor(Math.random() * 906);
-
-  const pokes = await supabase.from('pokemons').select('*');
-  let allPokesList = pokes.data!;
-
-  return {
-    props: {
-      poke: allPokesList[randomPokeId],
-      allPokesList
-    }
-  };
-}
-
-const Page = styled.div`
-  background-color: #b82f43;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
 
 const Pronto = styled.span<{ pronto: boolean }>`
   color: ${props => props.pronto ? 'green' : 'red'};
@@ -324,26 +257,4 @@ const WaitingStatePage = styled.div`
   }
 `;
 
-const Main = styled.main`
-  background-color: white;
-  color: black;
-  width: 95vw;
-  height: 90vh;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const Bloco = styled.div`
-  width: 20%;
-  position: absolute;
-  background-color: white;
-  bottom: 0;
-  border: 1px solid black;
-  border-radius: 2rem;
-  padding: 2rem;
-`;
-
-export default GamePage;
+export default RoomPage;
